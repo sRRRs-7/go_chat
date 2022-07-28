@@ -1,7 +1,13 @@
-server:
-	go run main.go
+greetServer:
+	go run main.go -greet
 
-front:
-	go run client/client.go
+greetClient:
+	go run client/client.go -greet
 
-.PHOXY: server, client
+calcServer:
+	go run main.go -calculate
+
+calcClient:
+	go run client/client.go -calculate
+
+.PHOXY: greetServer, calcServer, greetClient, calcClient

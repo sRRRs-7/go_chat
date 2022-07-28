@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+option go_package = "calc/;calc";
+
+package calc;
+
+service CalcService {
+    rpc Calc (CalcReq) returns (CalcRes){};
+};
+
+// struct
+message Calculate {
+    int32 num1 = 1;
+    int32 num2 = 2;
+}
+
+// greeting = {"first_name", "last_name"}
+message CalcReq {
+    Calculate calculate = 1;
+}
+
+// response
+message CalcRes {
+    int32 result = 1;
+}

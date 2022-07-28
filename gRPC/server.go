@@ -11,18 +11,8 @@ import (
 
 type server struct {}
 
-func ( *server) Greet(ctx context.Context, req *GreetReq) (*GreetRes, error) {
-	fmt.Printf("Greet function invoked with %v\n", req)
-	firstName := req.GetGreeting().GetFirstName()
-	result := "Fuck you " + firstName
-	res := &GreetRes{
-		Result: result,
-	}
-	return res, nil
-}
-
-func Server() {
-	fmt.Println("Start gRPC server")
+func GreetServer() {
+	fmt.Println("Start gRPC greet server")
 	listen, err := net.Listen("tcp", "0.0.0.0:8080")
 	if err != nil {
 		log.Fatalf("Failed to listen: %v", err)
@@ -32,4 +22,14 @@ func Server() {
 	if err := s.Serve(listen); err != nil {
 		log.Fatalf("Failed to serve: %v", err)
 	}
+}
+
+func ( *server) Greet(ctx context.Context, req *GreetReq) (*GreetRes, error) {
+	fmt.Printf("Greet function invoked with %v\n", req)
+	firstName := req.GetGreeting().GetFirstName()
+	result := "Fuck you " + firstName
+	res := &GreetRes{
+		Result: result,
+	}
+	return res, nil
 }

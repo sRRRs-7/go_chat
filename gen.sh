@@ -5,4 +5,8 @@
 
 protoc --go_out=. \
     --go-grpc_out=require_unimplemented_servers=false:. \
-    protoc/protoc.proto
+    protoc/greet.proto
+
+protoc --go_out=. \
+    --go-grpc_out=require_unimplemented_servers=false:. \
+    protoc/calc.proto
