@@ -21,9 +21,10 @@ import (
 func main() {
 	greetFlag := flag.Bool("greet", false, "start greet client")
 	greetManyFlag := flag.Bool("greetMany", false, "start many times greet client")
-	LongGreetFlag := flag.Bool("longGreet", false, "start long greet client")
+	longGreetFlag := flag.Bool("longGreet", false, "start long greet client")
 	calculateFlag := flag.Bool("calculate", false, "start calc client")
 	calcManyFlag := flag.Bool("calcMany", false, "start calc client")
+	longCalcFlag := flag.Bool("longCalc", false, "start long calc client")
 	flag.Parse()
 
 	conn, err := grpc.Dial("0.0.0.0:8080", grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -45,7 +46,7 @@ func main() {
 		fmt.Println()
 		greetServerStream(client)
 
-	case *LongGreetFlag:
+	case *longGreetFlag:
 		client := greet.NewGreetServiceClient(conn)
 		fmt.Printf("Create long greet client: %f", client)
 		fmt.Println()
@@ -62,6 +63,12 @@ func main() {
 		fmt.Printf("Create many calc client: %f", client)
 		fmt.Println()
 		calcServerStream(client)
+
+	case *longCalcFlag:
+		client := calc.NewCalcServiceClient(conn)
+		fmt.Printf("Create long calc client: %f", client)
+		fmt.Println()
+		calcClientStream(client)
 	}
 }
 
@@ -265,6 +272,60 @@ func calcServerStream(c calc.CalcServiceClient) {
 		}
 		log.Printf("Response: %v", msg.GetResult())
 	}
+}
+
+func calcClientStream(c calc.CalcServiceClient) {
+	fmt.Println("Starting to calculate client stream")
+
+	var requests []*calc.LongCalcsReq
+	for i := 0; i < 5; i++ {
+		fmt.Print("Enter num1: ")
+		num1, err := input(os.Stdin, flag.Args()...)
+		if err != nil {
+			log.Fatalf("Failed to input num1: %v", err)
+		}
+
+		fmt.Print("Enter num2: ")
+		num2, err := input(os.Stdin, flag.Args()...)
+		if err != nil {
+			log.Fatalf("Failed to input num2: %v", err)
+		}
+
+		intNum1, err := strconv.Atoi(num1)
+		if err != nil{
+			log.Fatalf("Failed to convert type num1: %v", err)
+		}
+		intNum2, err := strconv.Atoi(num2)
+		if err != nil{
+			log.Fatalf("Failed to convert type num2: %v", err)
+		}
+
+		req := &calc.LongCalcsReq{
+			Calculate: &calc.Calculate{
+				Num1: int32(intNum1),
+				Num2: int32(intNum2),
+			},
+		}
+		requests = append(requests, req)
+	}
+
+	stream, err := c.LongCalc(context.Background())
+	if err != nil {
+		log.Fatalf("Failed to calling RPC: %v", err)
+	}
+
+	for _, req := range requests {
+		fmt.Println("Send request: ", req)
+		stream.Send(req)
+		time.Sleep(500 * time.Millisecond)
+	}
+
+	res, err := stream.CloseAndRecv()
+	if err != nil {
+		log.Fatalf("Failed to receive response from LongCalc: %v\n", err)
+	}
+
+	fmt.Printf("Response: %v\n", res)
 }
 
 func input(r io.Reader, args ...string) (string, error) {

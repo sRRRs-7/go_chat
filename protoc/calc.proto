@@ -7,6 +7,7 @@ package calc;
 service CalcService {
     rpc Calc (CalcReq) returns (CalcRes){};
     rpc CalcManyTimes (CalcManyTimesReq) returns (stream CalcManyTimesRes);
+    rpc LongCalc (stream LongCalcsReq) returns (LongCalcRes);
 };
 
 // struct
@@ -19,7 +20,6 @@ message Calculate {
 message CalcReq {
     Calculate calculate = 1;
 }
-
 // response
 message CalcRes {
     int32 result = 1;
@@ -28,7 +28,13 @@ message CalcRes {
 message CalcManyTimesReq {
     Calculate calculate = 1;
 }
-
 message CalcManyTimesRes {
+    int32 result = 1;
+}
+
+message LongCalcsReq {
+    Calculate calculate = 1;
+}
+message LongCalcRes {
     int32 result = 1;
 }

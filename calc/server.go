@@ -3,6 +3,7 @@ package calc
 import (
 	context "context"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"time"
@@ -52,5 +53,24 @@ func ( *server) CalcManyTimes(req *CalcManyTimesReq, stream CalcService_CalcMany
 		time.Sleep(500 * time.Millisecond)
 	}
 	return nil
+}
+
+func ( *server) LongCalc(stream CalcService_LongCalcServer) error {
+	fmt.Println("Starting to do a calculate client streaming")
+	result := int32(0)
+	for {
+		req, err := stream.Recv()
+		if err == io.EOF {
+			return stream.SendAndClose(&LongCalcRes{
+				Result: result,
+			})
+		}
+		if err != nil {
+			log.Fatalf("Failed to receive response: %v", err)
+		}
+		num1 := req.GetCalculate().GetNum1()
+		num2 := req.GetCalculate().GetNum2()
+		result += num1 + num2
+	}
 }
 
