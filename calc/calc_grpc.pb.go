@@ -23,6 +23,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type CalcServiceClient interface {
 	Calc(ctx context.Context, in *CalcReq, opts ...grpc.CallOption) (*CalcRes, error)
+	CalcManyTimes(ctx context.Context, in *CalcManyTimesReq, opts ...grpc.CallOption) (CalcService_CalcManyTimesClient, error)
 }
 
 type calcServiceClient struct {
@@ -42,11 +43,44 @@ func (c *calcServiceClient) Calc(ctx context.Context, in *CalcReq, opts ...grpc.
 	return out, nil
 }
 
+func (c *calcServiceClient) CalcManyTimes(ctx context.Context, in *CalcManyTimesReq, opts ...grpc.CallOption) (CalcService_CalcManyTimesClient, error) {
+	stream, err := c.cc.NewStream(ctx, &CalcService_ServiceDesc.Streams[0], "/calc.CalcService/CalcManyTimes", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &calcServiceCalcManyTimesClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type CalcService_CalcManyTimesClient interface {
+	Recv() (*CalcManyTimesRes, error)
+	grpc.ClientStream
+}
+
+type calcServiceCalcManyTimesClient struct {
+	grpc.ClientStream
+}
+
+func (x *calcServiceCalcManyTimesClient) Recv() (*CalcManyTimesRes, error) {
+	m := new(CalcManyTimesRes)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // CalcServiceServer is the server API for CalcService service.
 // All implementations should embed UnimplementedCalcServiceServer
 // for forward compatibility
 type CalcServiceServer interface {
 	Calc(context.Context, *CalcReq) (*CalcRes, error)
+	CalcManyTimes(*CalcManyTimesReq, CalcService_CalcManyTimesServer) error
 }
 
 // UnimplementedCalcServiceServer should be embedded to have forward compatible implementations.
@@ -55,6 +89,9 @@ type UnimplementedCalcServiceServer struct {
 
 func (UnimplementedCalcServiceServer) Calc(context.Context, *CalcReq) (*CalcRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Calc not implemented")
+}
+func (UnimplementedCalcServiceServer) CalcManyTimes(*CalcManyTimesReq, CalcService_CalcManyTimesServer) error {
+	return status.Errorf(codes.Unimplemented, "method CalcManyTimes not implemented")
 }
 
 // UnsafeCalcServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -86,6 +123,27 @@ func _CalcService_Calc_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CalcService_CalcManyTimes_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(CalcManyTimesReq)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(CalcServiceServer).CalcManyTimes(m, &calcServiceCalcManyTimesServer{stream})
+}
+
+type CalcService_CalcManyTimesServer interface {
+	Send(*CalcManyTimesRes) error
+	grpc.ServerStream
+}
+
+type calcServiceCalcManyTimesServer struct {
+	grpc.ServerStream
+}
+
+func (x *calcServiceCalcManyTimesServer) Send(m *CalcManyTimesRes) error {
+	return x.ServerStream.SendMsg(m)
+}
+
 // CalcService_ServiceDesc is the grpc.ServiceDesc for CalcService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -98,6 +156,12 @@ var CalcService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _CalcService_Calc_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "CalcManyTimes",
+			Handler:       _CalcService_CalcManyTimes_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "protoc/calc.proto",
 }

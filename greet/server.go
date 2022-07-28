@@ -1,12 +1,14 @@
-package gRPC
+package greet
 
 import (
 	context "context"
 	"fmt"
 	"log"
 	"net"
+	"strconv"
+	"time"
 
-	"google.golang.org/grpc"
+	grpc "google.golang.org/grpc"
 )
 
 type server struct {}
@@ -24,6 +26,7 @@ func GreetServer() {
 	}
 }
 
+// unary
 func ( *server) Greet(ctx context.Context, req *GreetReq) (*GreetRes, error) {
 	fmt.Printf("Greet function invoked with %v\n", req)
 	firstName := req.GetGreeting().GetFirstName()
@@ -32,4 +35,20 @@ func ( *server) Greet(ctx context.Context, req *GreetReq) (*GreetRes, error) {
 		Result: result,
 	}
 	return res, nil
+}
+
+// server streaming
+func ( *server) GreetManyTimes(req *GreetManyTimesReq, stream GreetService_GreetManyTimesServer) error {
+	fmt.Printf("Greet function invoked with %v\n", req)
+	firstName := req.GetGreeting().GetFirstName()
+	lastName := req.GetGreeting().GetLastName()
+	for i := 0; i < 10; i++ {
+		result := fmt.Sprintf("Fuck you %s %s - %s times", firstName, lastName, strconv.Itoa(i))
+		res := &GreetManyTimesRes{
+			Result: result,
+		}
+		stream.SendMsg(res)
+		time.Sleep(500 * time.Millisecond)
+	}
+	return nil
 }

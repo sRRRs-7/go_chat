@@ -6,6 +6,7 @@ package calc;
 
 service CalcService {
     rpc Calc (CalcReq) returns (CalcRes){};
+    rpc CalcManyTimes (CalcManyTimesReq) returns (stream CalcManyTimesRes);
 };
 
 // struct
@@ -21,5 +22,13 @@ message CalcReq {
 
 // response
 message CalcRes {
+    int32 result = 1;
+}
+
+message CalcManyTimesReq {
+    Calculate calculate = 1;
+}
+
+message CalcManyTimesRes {
     int32 result = 1;
 }

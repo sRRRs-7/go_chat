@@ -1,11 +1,14 @@
 syntax = "proto3";
 
-option go_package = "gRPC/;gRPC";
+option go_package = "greet/;greet";
 
-package gRPC;
+package greet;
 
 service GreetService {
+    // unary
     rpc Greet (GreetReq) returns (GreetRes){};
+    // server streaming
+    rpc GreetManyTimes (GreetManyTimesReq) returns (stream GreetManyTimesRes){};
 };
 
 // struct
@@ -19,7 +22,14 @@ message GreetReq {
     Greeting greeting = 1;
 }
 
-// response
 message GreetRes {
+    string result = 1;
+}
+
+message GreetManyTimesReq {
+    Greeting greeting = 1;
+}
+
+message GreetManyTimesRes {
     string result = 1;
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"time"
 
 	grpc "google.golang.org/grpc"
 )
@@ -34,5 +35,21 @@ func ( *server) Calc(ctx context.Context, req *CalcReq) (*CalcRes, error) {
 		Result: result,
 	}
 	return res, nil
+}
+
+func ( *server) CalcManyTimes(req *CalcManyTimesReq, stream CalcService_CalcManyTimesServer) error {
+	fmt.Println("Request num1: ", req.Calculate.Num1)
+	fmt.Println("Request num2: ", req.Calculate.Num2)
+	num1 := req.GetCalculate().Num1
+	num2 := req.GetCalculate().Num2
+	for i := 0; i < 10; i++ {
+		result := num1 + num2
+		res := &CalcRes{
+			Result: result,
+		}
+		stream.SendMsg(res)
+		time.Sleep(500 * time.Millisecond)
+	}
+	return nil
 }
 

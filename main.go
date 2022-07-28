@@ -4,18 +4,18 @@ import (
 	"flag"
 
 	"github.com/sRRRs-7/go_chat/calc"
-	"github.com/sRRRs-7/go_chat/gRPC"
+	"github.com/sRRRs-7/go_chat/greet"
 )
 
 func main() {
-	greet := flag.Bool("greet", false, "start greet server")
-	calculate := flag.Bool("calculate", false, "start calculate server")
+	greetFlag := flag.Bool("greet", false, "start greet server")
+	calculateFlag := flag.Bool("calculate", false, "start calculate server")
 	flag.Parse()
 
 	switch {
-	case *greet:
-		gRPC.GreetServer()
-	case *calculate:
+	case *greetFlag:
+		greet.GreetServer()
+	case *calculateFlag:
 		calc.CalculateServer()
 	}
 }

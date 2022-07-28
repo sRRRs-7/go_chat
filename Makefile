@@ -4,10 +4,16 @@ greetServer:
 greetClient:
 	go run client/client.go -greet
 
+manyGreetClient:
+	go run client/client.go -greetMany
+
 calcServer:
 	go run main.go -calculate
 
 calcClient:
 	go run client/client.go -calculate
 
-.PHOXY: greetServer, calcServer, greetClient, calcClient
+calcManyClient:
+	go run client/client.go -calcMany
+
+.PHOXY: greetServer, calcServer, manyGreetClient, greetClient, calcClient, calcManyClient
