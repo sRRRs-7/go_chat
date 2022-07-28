@@ -10,6 +10,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/sRRRs-7/go_chat/calc"
 	"github.com/sRRRs-7/go_chat/greet"
@@ -20,6 +21,7 @@ import (
 func main() {
 	greetFlag := flag.Bool("greet", false, "start greet client")
 	greetManyFlag := flag.Bool("greetMany", false, "start many times greet client")
+	LongGreetFlag := flag.Bool("longGreet", false, "start long greet client")
 	calculateFlag := flag.Bool("calculate", false, "start calc client")
 	calcManyFlag := flag.Bool("calcMany", false, "start calc client")
 	flag.Parse()
@@ -36,16 +38,25 @@ func main() {
 		fmt.Printf("Create greet client: %f", client)
 		fmt.Println()
 		greetUnary(client)
+
 	case *greetManyFlag:
 		client := greet.NewGreetServiceClient(conn)
 		fmt.Printf("Create many times greet client: %f", client)
 		fmt.Println()
 		greetServerStream(client)
+
+	case *LongGreetFlag:
+		client := greet.NewGreetServiceClient(conn)
+		fmt.Printf("Create long greet client: %f", client)
+		fmt.Println()
+		greetClientStream(client)
+
 	case *calculateFlag:
 		client := calc.NewCalcServiceClient(conn)
 		fmt.Printf("Create calc client: %f", client)
 		fmt.Println()
 		calcUnary(client)
+
 	case *calcManyFlag:
 		client := calc.NewCalcServiceClient(conn)
 		fmt.Printf("Create many calc client: %f", client)
@@ -118,6 +129,56 @@ func greetServerStream(c greet.GreetServiceClient) {
 			log.Fatalf("Failed to reading stream: %v", err)
 		}
 		log.Printf("Response: %v", msg.GetResult())
+	}
+}
+
+func greetClientStream(c greet.GreetServiceClient) {
+	fmt.Println("Starting to do a client stream RPC")
+
+	var requests []*greet.LongGreetReq
+	for i := 0; i < 5; i++ {
+		fmt.Print("Enter first name: ")
+		firstName, err := input(os.Stdin, flag.Args()...)
+		if err != nil{
+			log.Fatalf("Failed to input first_name: %v", err)
+		}
+
+		fmt.Print("Enter last name: ")
+		lastName, err := input(os.Stdin, flag.Args()...)
+		if err != nil{
+			log.Fatalf("Failed to input last_name: %v", err)
+		}
+
+		req := &greet.LongGreetReq{
+			Greeting: &greet.Greeting{
+				FirstName: firstName,
+				LastName: lastName,
+			},
+		}
+		requests = append(requests, req)
+	}
+
+	stream, err := c.LongGreet(context.Background())
+	if err != nil {
+		log.Fatalf("Failed to calling RPC: %v", err)
+	}
+
+	for _, req := range requests {
+		fmt.Println("Send request: ", req)
+		stream.Send(req)
+		time.Sleep(500 * time.Millisecond)
+	}
+
+	res, err := stream.CloseAndRecv()
+	if err != nil {
+		log.Fatalf("Failed to receive response from LongGreet: %v\n", err)
+	}
+	str := strings.Split(res.Result, "!!")
+	for i, s := range str {
+		if i == len(str)-1 {
+			break
+		}
+		log.Printf("Response: %d: %v!!\n", i, s)
 	}
 }
 

@@ -9,6 +9,8 @@ service GreetService {
     rpc Greet (GreetReq) returns (GreetRes){};
     // server streaming
     rpc GreetManyTimes (GreetManyTimesReq) returns (stream GreetManyTimesRes){};
+    // client streaming
+    rpc LongGreet (stream LongGreetReq) returns (LongGreetRes){};
 };
 
 // struct
@@ -17,19 +19,26 @@ message Greeting {
     string last_name = 2;
 }
 
-// greeting = {"first_name", "last_name"}
+// unary
 message GreetReq {
     Greeting greeting = 1;
 }
-
 message GreetRes {
     string result = 1;
 }
 
+// server streaming
 message GreetManyTimesReq {
     Greeting greeting = 1;
 }
-
 message GreetManyTimesRes {
+    string result = 1;
+}
+
+// client streaming
+message LongGreetReq {
+    Greeting greeting = 1;
+}
+message LongGreetRes {
     string result = 1;
 }

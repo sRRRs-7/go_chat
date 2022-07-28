@@ -42,11 +42,12 @@ func ( *server) CalcManyTimes(req *CalcManyTimesReq, stream CalcService_CalcMany
 	fmt.Println("Request num2: ", req.Calculate.Num2)
 	num1 := req.GetCalculate().Num1
 	num2 := req.GetCalculate().Num2
-	for i := 0; i < 10; i++ {
-		result := num1 + num2
+	result := num1 + num2
+	for i := 0; i < 16; i++ {
 		res := &CalcRes{
 			Result: result,
 		}
+		result += result
 		stream.SendMsg(res)
 		time.Sleep(500 * time.Millisecond)
 	}
