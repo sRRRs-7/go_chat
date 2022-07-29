@@ -74,3 +74,30 @@ func ( *server) LongCalc(stream CalcService_LongCalcServer) error {
 	}
 }
 
+func ( *server) ManyCalc(stream CalcService_ManyCalcServer) error {
+	fmt.Println("Starting to do a many calculate bidirestional stream")
+
+	var sum int32
+	var result int32
+	for {
+		req, err := stream.Recv()
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			log.Fatalf("Failed to receive request: %v", err)
+		}
+		num1 := req.GetCalculate().GetNum1()
+		num2 := req.GetCalculate().GetNum2()
+		sum = num1 + num2
+		result += sum
+		sendErr := stream.Send(&ManyCalcRes{
+			Result: result,
+		})
+		if sendErr != nil {
+			log.Fatalf("Failed to send response: %v", sendErr)
+		}
+		log.Printf("result: %v", result)
+	}
+}
+

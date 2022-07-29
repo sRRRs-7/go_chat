@@ -74,3 +74,27 @@ func ( *server) LongGreet(stream GreetService_LongGreetServer) error {
 		result += str
 	}
 }
+
+// bidirectinal streaming
+func ( *server) GreetEveryone(stream GreetService_GreetEveryoneServer) error {
+	fmt.Println("starting to do bidirectional streaming")
+
+	for {
+		req, err := stream.Recv()
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			log.Fatalf("Failed to receive requests: %v", err)
+		}
+		firstName := req.GetGreeting().GetFirstName()
+		lastName := req.GetGreeting().GetLastName()
+		result := fmt.Sprintf("Fuck you %s %s", firstName, lastName)
+		sendErr := stream.Send(&GreetEveryoneRes{
+			Result: result,
+		})
+		if sendErr != nil {
+			log.Fatalf("Failed to send message: %v", sendErr)
+		}
+	}
+}

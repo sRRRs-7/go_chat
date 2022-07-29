@@ -22,9 +22,14 @@ func main() {
 	greetFlag := flag.Bool("greet", false, "start greet client")
 	greetManyFlag := flag.Bool("greetMany", false, "start many times greet client")
 	longGreetFlag := flag.Bool("longGreet", false, "start long greet client")
+	GreetEveryoneFlag := flag.Bool("everyone", false, "start every greet client")
+
+
 	calculateFlag := flag.Bool("calculate", false, "start calc client")
 	calcManyFlag := flag.Bool("calcMany", false, "start calc client")
 	longCalcFlag := flag.Bool("longCalc", false, "start long calc client")
+	manyCalcFlag := flag.Bool("manyCalc", false, "start many calc client")
+
 	flag.Parse()
 
 	conn, err := grpc.Dial("0.0.0.0:8080", grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -52,6 +57,12 @@ func main() {
 		fmt.Println()
 		greetClientStream(client)
 
+	case *GreetEveryoneFlag:
+		client := greet.NewGreetServiceClient(conn)
+		fmt.Printf("Create long greet client: %f", client)
+		fmt.Println()
+		greetBiDirectinalStream(client)
+
 	case *calculateFlag:
 		client := calc.NewCalcServiceClient(conn)
 		fmt.Printf("Create calc client: %f", client)
@@ -69,6 +80,12 @@ func main() {
 		fmt.Printf("Create long calc client: %f", client)
 		fmt.Println()
 		calcClientStream(client)
+
+	case *manyCalcFlag:
+		client := calc.NewCalcServiceClient(conn)
+		fmt.Printf("Create many calc client: %f", client)
+		fmt.Println()
+		calcBidirectionalStream(client)
 	}
 }
 
@@ -142,8 +159,12 @@ func greetServerStream(c greet.GreetServiceClient) {
 func greetClientStream(c greet.GreetServiceClient) {
 	fmt.Println("Starting to do a client stream RPC")
 
+	var cnt int
+	fmt.Print("Enter iteration number: ")
+	fmt.Scanf("%d", &cnt)
+
 	var requests []*greet.LongGreetReq
-	for i := 0; i < 5; i++ {
+	for i := 0; i < cnt; i++ {
 		fmt.Print("Enter first name: ")
 		firstName, err := input(os.Stdin, flag.Args()...)
 		if err != nil{
@@ -170,9 +191,9 @@ func greetClientStream(c greet.GreetServiceClient) {
 		log.Fatalf("Failed to calling RPC: %v", err)
 	}
 
-	for _, req := range requests {
-		fmt.Println("Send request: ", req)
-		stream.Send(req)
+	for _, request := range requests {
+		fmt.Println("Send request: ", request)
+		stream.Send(request)
 		time.Sleep(500 * time.Millisecond)
 	}
 
@@ -187,6 +208,68 @@ func greetClientStream(c greet.GreetServiceClient) {
 		}
 		log.Printf("Response: %d: %v!!\n", i, s)
 	}
+}
+
+func greetBiDirectinalStream(c greet.GreetServiceClient) {
+	fmt.Println("Starting to do a greet bidirectinal stream RPC")
+
+	var cnt int
+	fmt.Print("Enter iteration number: ")
+	fmt.Scanf("%d", &cnt)
+
+	var requests []*greet.GreetEveryoneReq
+	for i := 0; i < cnt; i++ {
+		fmt.Print("Enter first name: ")
+		firstName, err := input(os.Stdin, flag.Args()...)
+		if err != nil{
+			log.Fatalf("Failed to input first_name: %v", err)
+		}
+
+		fmt.Print("Enter last name: ")
+		lastName, err := input(os.Stdin, flag.Args()...)
+		if err != nil{
+			log.Fatalf("Failed to input last_name: %v", err)
+		}
+
+		req := &greet.GreetEveryoneReq{
+			Greeting: &greet.Greeting{
+				FirstName: firstName,
+				LastName: lastName,
+			},
+		}
+		requests = append(requests, req)
+	}
+
+	stream, err := c.GreetEveryone(context.Background())
+	if err != nil {
+		log.Fatalf("Failed to calling greet everyone: %v", err)
+	}
+
+	waitCh := make(chan struct{})
+	go func() {
+		for _, request := range requests {
+			fmt.Println("send request: ", request)
+			stream.Send(request)
+			time.Sleep(500 * time.Millisecond)
+		}
+		stream.CloseSend()
+	}()
+	go func() {
+		for {
+			res, err := stream.Recv()
+			if err == io.EOF {
+				fmt.Println("EOF")
+				close(waitCh)
+				break
+			}
+			if err != nil {
+				log.Fatalf("Failed to receive response: %v", err)
+				close(waitCh)
+			}
+			log.Printf("Response: %v\n", res.GetResult())
+		}
+	}()
+	<-waitCh
 }
 
 func calcUnary(c calc.CalcServiceClient) {
@@ -277,8 +360,12 @@ func calcServerStream(c calc.CalcServiceClient) {
 func calcClientStream(c calc.CalcServiceClient) {
 	fmt.Println("Starting to calculate client stream")
 
+	var cnt int
+	fmt.Print("Enter iteration number: ")
+	fmt.Scanf("%d", &cnt)
+
 	var requests []*calc.LongCalcsReq
-	for i := 0; i < 5; i++ {
+	for i := 0; i < cnt; i++ {
 		fmt.Print("Enter num1: ")
 		num1, err := input(os.Stdin, flag.Args()...)
 		if err != nil {
@@ -314,9 +401,9 @@ func calcClientStream(c calc.CalcServiceClient) {
 		log.Fatalf("Failed to calling RPC: %v", err)
 	}
 
-	for _, req := range requests {
-		fmt.Println("Send request: ", req)
-		stream.Send(req)
+	for _, request := range requests {
+		fmt.Println("Send request: ", request)
+		stream.Send(request)
 		time.Sleep(500 * time.Millisecond)
 	}
 
@@ -326,6 +413,77 @@ func calcClientStream(c calc.CalcServiceClient) {
 	}
 
 	fmt.Printf("Response: %v\n", res)
+}
+
+func calcBidirectionalStream(c calc.CalcServiceClient) {
+	fmt.Println("starting to do a calculation bidirectional streaming")
+
+	var cnt int
+	fmt.Print("Enter iteration number: ")
+	fmt.Scanf("%d", &cnt)
+
+	var requests []*calc.ManyCalcReq
+	for i := 0; i < cnt; i++ {
+		fmt.Print("Enter num1: ")
+		num1, err := input(os.Stdin, flag.Args()...)
+		if err != nil{
+			log.Fatalf("invalid value num1: %v", err)
+		}
+
+		fmt.Print("Enter num2: ")
+		num2, err := input(os.Stdin, flag.Args()...)
+		if err != nil{
+			log.Fatalf("invalid value num2: %v", err)
+		}
+
+		intNum1, err := strconv.Atoi(num1)
+		if err != nil{
+			log.Fatalf("Failed to convert type num1: %v", err)
+		}
+		intNum2, err := strconv.Atoi(num2)
+		if err != nil{
+			log.Fatalf("Failed to convert type num2: %v", err)
+		}
+
+		req := &calc.ManyCalcReq{
+			Calculate: &calc.Calculate{
+				Num1: int32(intNum1),
+				Num2: int32(intNum2),
+			},
+		}
+		requests = append(requests, req)
+	}
+
+	stream, err := c.ManyCalc(context.Background())
+	if err != nil {
+		log.Fatalf("Failed to calling ManyCalc: %v", err)
+	}
+
+	waitCh := make(chan struct{})
+	go func() {
+		for _, request := range requests{
+			fmt.Println("Send request: ", request)
+			stream.Send(request)
+			time.Sleep(500 * time.Millisecond)
+		}
+		stream.CloseSend()
+	}()
+	go func() {
+		for {
+			res, err := stream.Recv()
+			if err == io.EOF {
+				fmt.Println("EOF")
+				close(waitCh)
+				break
+			}
+			if err != nil {
+				log.Fatalf("Failed to receive response: %v", err)
+				close(waitCh)
+			}
+			log.Printf("Response: %v", res.GetResult())
+		}
+	}()
+	<- waitCh
 }
 
 func input(r io.Reader, args ...string) (string, error) {

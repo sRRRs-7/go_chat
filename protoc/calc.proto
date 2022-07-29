@@ -8,6 +8,7 @@ service CalcService {
     rpc Calc (CalcReq) returns (CalcRes){};
     rpc CalcManyTimes (CalcManyTimesReq) returns (stream CalcManyTimesRes);
     rpc LongCalc (stream LongCalcsReq) returns (LongCalcRes);
+    rpc ManyCalc (stream ManyCalcReq) returns (stream ManyCalcRes);
 };
 
 // struct
@@ -25,6 +26,7 @@ message CalcRes {
     int32 result = 1;
 }
 
+// server streaming
 message CalcManyTimesReq {
     Calculate calculate = 1;
 }
@@ -32,9 +34,18 @@ message CalcManyTimesRes {
     int32 result = 1;
 }
 
+// client streaming
 message LongCalcsReq {
     Calculate calculate = 1;
 }
 message LongCalcRes {
+    int32 result = 1;
+}
+
+// bidirectional streaming
+message ManyCalcReq {
+    Calculate calculate = 1;
+}
+message ManyCalcRes {
     int32 result = 1;
 }

@@ -25,6 +25,7 @@ type CalcServiceClient interface {
 	Calc(ctx context.Context, in *CalcReq, opts ...grpc.CallOption) (*CalcRes, error)
 	CalcManyTimes(ctx context.Context, in *CalcManyTimesReq, opts ...grpc.CallOption) (CalcService_CalcManyTimesClient, error)
 	LongCalc(ctx context.Context, opts ...grpc.CallOption) (CalcService_LongCalcClient, error)
+	ManyCalc(ctx context.Context, opts ...grpc.CallOption) (CalcService_ManyCalcClient, error)
 }
 
 type calcServiceClient struct {
@@ -110,6 +111,37 @@ func (x *calcServiceLongCalcClient) CloseAndRecv() (*LongCalcRes, error) {
 	return m, nil
 }
 
+func (c *calcServiceClient) ManyCalc(ctx context.Context, opts ...grpc.CallOption) (CalcService_ManyCalcClient, error) {
+	stream, err := c.cc.NewStream(ctx, &CalcService_ServiceDesc.Streams[2], "/calc.CalcService/ManyCalc", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &calcServiceManyCalcClient{stream}
+	return x, nil
+}
+
+type CalcService_ManyCalcClient interface {
+	Send(*ManyCalcReq) error
+	Recv() (*ManyCalcRes, error)
+	grpc.ClientStream
+}
+
+type calcServiceManyCalcClient struct {
+	grpc.ClientStream
+}
+
+func (x *calcServiceManyCalcClient) Send(m *ManyCalcReq) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *calcServiceManyCalcClient) Recv() (*ManyCalcRes, error) {
+	m := new(ManyCalcRes)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // CalcServiceServer is the server API for CalcService service.
 // All implementations should embed UnimplementedCalcServiceServer
 // for forward compatibility
@@ -117,6 +149,7 @@ type CalcServiceServer interface {
 	Calc(context.Context, *CalcReq) (*CalcRes, error)
 	CalcManyTimes(*CalcManyTimesReq, CalcService_CalcManyTimesServer) error
 	LongCalc(CalcService_LongCalcServer) error
+	ManyCalc(CalcService_ManyCalcServer) error
 }
 
 // UnimplementedCalcServiceServer should be embedded to have forward compatible implementations.
@@ -131,6 +164,9 @@ func (UnimplementedCalcServiceServer) CalcManyTimes(*CalcManyTimesReq, CalcServi
 }
 func (UnimplementedCalcServiceServer) LongCalc(CalcService_LongCalcServer) error {
 	return status.Errorf(codes.Unimplemented, "method LongCalc not implemented")
+}
+func (UnimplementedCalcServiceServer) ManyCalc(CalcService_ManyCalcServer) error {
+	return status.Errorf(codes.Unimplemented, "method ManyCalc not implemented")
 }
 
 // UnsafeCalcServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -209,6 +245,32 @@ func (x *calcServiceLongCalcServer) Recv() (*LongCalcsReq, error) {
 	return m, nil
 }
 
+func _CalcService_ManyCalc_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(CalcServiceServer).ManyCalc(&calcServiceManyCalcServer{stream})
+}
+
+type CalcService_ManyCalcServer interface {
+	Send(*ManyCalcRes) error
+	Recv() (*ManyCalcReq, error)
+	grpc.ServerStream
+}
+
+type calcServiceManyCalcServer struct {
+	grpc.ServerStream
+}
+
+func (x *calcServiceManyCalcServer) Send(m *ManyCalcRes) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *calcServiceManyCalcServer) Recv() (*ManyCalcReq, error) {
+	m := new(ManyCalcReq)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // CalcService_ServiceDesc is the grpc.ServiceDesc for CalcService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -230,6 +292,12 @@ var CalcService_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "LongCalc",
 			Handler:       _CalcService_LongCalc_Handler,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "ManyCalc",
+			Handler:       _CalcService_ManyCalc_Handler,
+			ServerStreams: true,
 			ClientStreams: true,
 		},
 	},

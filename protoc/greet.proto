@@ -11,6 +11,8 @@ service GreetService {
     rpc GreetManyTimes (GreetManyTimesReq) returns (stream GreetManyTimesRes){};
     // client streaming
     rpc LongGreet (stream LongGreetReq) returns (LongGreetRes){};
+    // bidirectinal streaming
+    rpc GreetEveryone (stream GreetEveryoneReq) returns (stream GreetEveryoneRes){};
 };
 
 // struct
@@ -40,5 +42,13 @@ message LongGreetReq {
     Greeting greeting = 1;
 }
 message LongGreetRes {
+    string result = 1;
+}
+
+// bidirectional streaming
+message GreetEveryoneReq {
+    Greeting greeting = 1;
+}
+message GreetEveryoneRes {
     string result = 1;
 }

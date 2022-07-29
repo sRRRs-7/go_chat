@@ -13,6 +13,9 @@ greetManyClient:
 longGreetClient:
 	go run client/client.go -longGreet
 
+greetEveryoneClient:
+	go run client/client.go -everyone
+
 calcClient:
 	go run client/client.go -calculate
 
@@ -22,4 +25,7 @@ calcManyClient:
 longCalcClient:
 	go run client/client.go -longCalc
 
-.PHOXY: greetServer, calcServer, greetClient, greetManyClient, longGreetClient, calcClient, calcManyClient, longCalcClient
+manyCalcClient:
+	go run client/client.go -manyCalc
+
+.PHOXY: greetServer, calcServer, greetClient, greetManyClient, longGreetClient, calcClient, calcManyClient, longCalcClient, manyCalcClient
