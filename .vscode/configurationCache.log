@@ -1,0 +1,1 @@
+{"buildTargets":["calcClient","calcManyClient","calcServer","greetClient","greetDeadlineClient","greetEveryoneClient","greetManyClient","greetServer","longCalcClient","longGreetClient","manyCalcClient"],"launchTargets":[],"customConfigurationProvider":{"workspaceBrowse":{"browsePath":[],"compilerArgs":[]},"fileIndex":[]}}

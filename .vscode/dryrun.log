@@ -1,0 +1,5 @@
+make --dry-run --always-make --keep-going --print-directory
+make: Entering directory `/Users/srrrs/CLI/go_gRPC'
+go run main.go -greet
+make: Leaving directory `/Users/srrrs/CLI/go_gRPC'
+ 
