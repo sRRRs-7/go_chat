@@ -15,7 +15,9 @@ import (
 	"github.com/sRRRs-7/go_chat/calc"
 	"github.com/sRRRs-7/go_chat/greet"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/status"
 )
 
 func main() {
@@ -23,7 +25,7 @@ func main() {
 	greetManyFlag := flag.Bool("greetMany", false, "start many times greet client")
 	longGreetFlag := flag.Bool("longGreet", false, "start long greet client")
 	GreetEveryoneFlag := flag.Bool("everyone", false, "start every greet client")
-
+	GreetDeadFlag := flag.Bool("deadline", false, "start every greet client")
 
 	calculateFlag := flag.Bool("calculate", false, "start calc client")
 	calcManyFlag := flag.Bool("calcMany", false, "start calc client")
@@ -63,6 +65,15 @@ func main() {
 		fmt.Println()
 		greetBiDirectinalStream(client)
 
+	case *GreetDeadFlag:
+		client := greet.NewGreetServiceClient(conn)
+		fmt.Printf("Create long greet client: %f", client)
+		fmt.Println()
+		greetWithDeadline(client, 5*time.Second)
+		greetWithDeadline(client, 1*time.Second)
+
+
+	// calculate
 	case *calculateFlag:
 		client := calc.NewCalcServiceClient(conn)
 		fmt.Printf("Create calc client: %f", client)
@@ -272,6 +283,53 @@ func greetBiDirectinalStream(c greet.GreetServiceClient) {
 	<-waitCh
 }
 
+func greetWithDeadline(c greet.GreetServiceClient, t time.Duration) {
+	fmt.Println("Starting to do a greet with deadline RPC")
+
+	fmt.Print("Enter first name: ")
+	firstName, err := input(os.Stdin, flag.Args()...)
+	if err != nil {
+		log.Fatalf("invalid first name: %v", err)
+	}
+
+	fmt.Print("Enter last name: ")
+	lastName, err := input(os.Stdin, flag.Args()...)
+	if err != nil {
+		log.Fatalf("invalid last name: %v", err)
+	}
+
+	req := &greet.GreetWithDeadlineReq{
+		Greeting: &greet.Greeting{
+			FirstName: firstName,
+			LastName: lastName,
+		},
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), t)
+	defer cancel()
+
+	res, err := c.GreetWithDeadline(ctx, req)
+	if err != nil{
+		statusErr, ok := status.FromError(err)
+		fmt.Println("status error code: ", statusErr)
+		if ok {
+			if statusErr.Code() == codes.DeadlineExceeded {
+				log.Println("Timeout was hit, the process hasn't finish yet")
+			} else {
+				fmt.Println("Unexpected error: ", statusErr)
+			}
+		} else {
+			log.Fatalf("Error while calling GreetWithDeadline: %v", err)
+		}
+		return
+	}
+	log.Printf("Response: %v", res.GetResult())
+}
+
+
+
+
+// calculate
 func calcUnary(c calc.CalcServiceClient) {
 	fmt.Println("Starting to do a calc unary RPC")
 

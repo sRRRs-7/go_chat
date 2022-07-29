@@ -13,6 +13,8 @@ service GreetService {
     rpc LongGreet (stream LongGreetReq) returns (LongGreetRes){};
     // bidirectinal streaming
     rpc GreetEveryone (stream GreetEveryoneReq) returns (stream GreetEveryoneRes){};
+    // deadline
+    rpc GreetWithDeadline (GreetWithDeadlineReq) returns (GreetWithDeadlineRes){};
 };
 
 // struct
@@ -50,5 +52,13 @@ message GreetEveryoneReq {
     Greeting greeting = 1;
 }
 message GreetEveryoneRes {
+    string result = 1;
+}
+
+// Deadline
+message GreetWithDeadlineReq {
+    Greeting greeting = 1;
+}
+message GreetWithDeadlineRes {
     string result = 1;
 }
